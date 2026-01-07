@@ -1,4 +1,4 @@
-# arch-recovery
+# arch-restore
 
 Disaster recovery script for Arch Linux. Boot from any Arch ISO, run this script, get a working system.
 
@@ -35,7 +35,7 @@ This is a bare-metal recovery system. If your laptop dies, gets stolen, or you j
 iwctl station wlan0 connect "YourWiFi"
 
 # Get the script
-curl -O https://raw.githubusercontent.com/benthayer/arch-recovery/main/install.sh
+curl -O https://raw.githubusercontent.com/benthayer/arch-restore/main/install.sh
 chmod +x install.sh
 
 # Partition your disk first (if needed)
