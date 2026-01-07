@@ -27,6 +27,11 @@ DEFAULT_PASSWORD="changeme"
 TIMEZONE="America/New_York"
 NEW_ROOT="/mnt"
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DEPLOY_KEY="$SCRIPT_DIR/deploy_key"
+PERSONALIZATION_REPO="git@github.com:benthayer/arch-personalization.git"
+BACKGROUNDS_REPO="git@github.com:benthayer/backgrounds.git"
+
 # =============================================================================
 # FUNCTIONS
 # =============================================================================
@@ -37,6 +42,48 @@ validate_args() {
     echo "Example: $0 /dev/nvme0n1p1 /dev/nvme0n1p2"
     exit 1
   fi
+}
+
+setup_deploy_key() {
+  echo ""
+  echo "=== Personalization Setup ==="
+  echo "Enter deploy key passphrase to enable automatic cloning."
+  echo "Press Enter with no passphrase to skip (manual clone later)."
+  echo ""
+  
+  eval "$(ssh-agent -s)"
+  
+  if ssh-add "$DEPLOY_KEY" 2>/dev/null; then
+    CLONE_ENABLED=true
+    echo "Deploy key loaded. Repos will be cloned automatically."
+  else
+    CLONE_ENABLED=false
+    echo "Skipping automatic clone. You'll need to clone manually after reboot."
+  fi
+}
+
+clone_personalization_repos() {
+  if [[ "$CLONE_ENABLED" != true ]]; then
+    return
+  fi
+  
+  local USER_HOME="$NEW_ROOT/home/$USERNAME"
+  
+  echo "Cloning arch-personalization..."
+  git clone "$PERSONALIZATION_REPO" "$USER_HOME/.ben"
+  
+  echo "Adding backgrounds key..."
+  ssh-add "$USER_HOME/.ben/keys/backgrounds_deploy_key"
+  
+  echo "Cloning backgrounds..."
+  mkdir -p "$USER_HOME/files/Pictures"
+  git clone "$BACKGROUNDS_REPO" "$USER_HOME/files/Pictures/Backgrounds"
+  
+  echo "Creating configure.sh symlink..."
+  ln -sf ".ben/setup/configure.sh" "$USER_HOME/configure.sh"
+  
+  echo "Fixing ownership..."
+  arch-chroot $NEW_ROOT chown -R "$USERNAME:$USERNAME" "/home/$USERNAME"
 }
 
 confirm_destructive_operation() {
@@ -126,9 +173,14 @@ print_success() {
   echo "Done. Base system installed."
   echo "Reboot and login as '$USERNAME' with password '$DEFAULT_PASSWORD'"
   echo ""
-  echo "Then run personalization:"
-  echo "  git clone https://github.com/benthayer/arch-personalization.git ~/.ben"
-  echo "  ~/.ben/setup/configure.sh"
+  if [[ "$CLONE_ENABLED" == true ]]; then
+    echo "Personalization repos cloned. Run:"
+    echo "  ~/configure.sh"
+  else
+    echo "Then run personalization:"
+    echo "  git clone git@github.com:benthayer/arch-personalization.git ~/.ben"
+    echo "  ~/.ben/setup/configure.sh"
+  fi
   echo "=========================================="
 }
 
@@ -137,6 +189,7 @@ print_success() {
 # =============================================================================
 
 validate_args
+setup_deploy_key
 confirm_destructive_operation
 
 # Phase 1: Prepare disk
@@ -157,6 +210,9 @@ enable_essential_services
 # Phase 4: Make bootable
 install_systemd_boot
 generate_initramfs
+
+# Phase 5: Personalization (if key was provided)
+clone_personalization_repos
 
 # Done
 unmount_all
