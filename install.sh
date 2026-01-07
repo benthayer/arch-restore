@@ -1,7 +1,7 @@
 #!/bin/bash
 # Arch Linux Base System Recovery
-# Usage: ./install.sh /dev/nvme0n1p1 /dev/nvme0n1p2
-#                     boot-partition  root-partition
+# Usage: ./install.sh /dev/nvme0n1p1 /dev/nvme0n1p2 /dev/nvme0n1p3
+#                     boot-partition  swap-partition root-partition
 set -e
 
 # =============================================================================
@@ -9,17 +9,24 @@ set -e
 # =============================================================================
 
 BOOT_PARTITION=$1
-ROOT_PARTITION=$2
+SWAP_PARTITION=$2
+ROOT_PARTITION=$3
 
+# Core system
 BASE_SYSTEM="base linux linux-firmware"
 MICROCODE="amd-ucode intel-ucode"
 NETWORK="networkmanager"
-BOOTABLE_DESKTOP="i3 xorg-server xorg-xinit sddm"
-MINIMAL_TOOLS="zsh git vim"
-FIRST_BROWSER="firefox"
-FIRST_TERMINAL="terminator"
 
-PACSTRAP_PACKAGES="$BASE_SYSTEM $MICROCODE $NETWORK $BOOTABLE_DESKTOP $MINIMAL_TOOLS $FIRST_BROWSER $FIRST_TERMINAL"
+# Desktop essentials (fully functional i3 desktop after install)
+I3_DESKTOP="i3 xorg-server xorg-xinit sddm"
+I3_ECOSYSTEM="dmenu i3status i3lock picom"
+DESKTOP_UTILS="feh flameshot dunst brightnessctl"
+AUDIO="pulseaudio pulseaudio-bluetooth alsa-utils pavucontrol"
+BLUETOOTH="bluez bluez-utils blueman"
+CLI_ESSENTIALS="zsh git vim jq wget curl htop ncdu rsync xclip tmux unzip tree"
+FIRST_APPS="firefox terminator"
+
+PACSTRAP_PACKAGES="$BASE_SYSTEM $MICROCODE $NETWORK $I3_DESKTOP $I3_ECOSYSTEM $DESKTOP_UTILS $AUDIO $BLUETOOTH $CLI_ESSENTIALS $FIRST_APPS"
 
 HOSTNAME="arch"
 USERNAME="ben"
@@ -37,9 +44,9 @@ BACKGROUNDS_REPO="git@github.com:benthayer/backgrounds.git"
 # =============================================================================
 
 validate_args() {
-  if [[ -z "$BOOT_PARTITION" || -z "$ROOT_PARTITION" ]]; then
-    echo "Usage: $0 <boot-partition> <root-partition>"
-    echo "Example: $0 /dev/nvme0n1p1 /dev/nvme0n1p2"
+  if [[ -z "$BOOT_PARTITION" || -z "$SWAP_PARTITION" || -z "$ROOT_PARTITION" ]]; then
+    echo "Usage: $0 <boot-partition> <swap-partition> <root-partition>"
+    echo "Example: $0 /dev/nvme0n1p1 /dev/nvme0n1p2 /dev/nvme0n1p3"
     exit 1
   fi
 }
@@ -87,13 +94,14 @@ clone_personalization_repos() {
 }
 
 confirm_destructive_operation() {
-  echo "Installing to: boot=$BOOT_PARTITION, root=$ROOT_PARTITION"
+  echo "Installing to: boot=$BOOT_PARTITION, swap=$SWAP_PARTITION, root=$ROOT_PARTITION"
   echo "This will FORMAT these partitions. Press Enter to continue or Ctrl+C to abort."
   read -r
 }
 
 format_partitions() {
   mkfs.fat -F32 "$BOOT_PARTITION"
+  mkswap "$SWAP_PARTITION"
   mkfs.ext4 -F "$ROOT_PARTITION"
 }
 
@@ -101,6 +109,7 @@ mount_partitions() {
   mount "$ROOT_PARTITION" $NEW_ROOT
   mkdir -p $NEW_ROOT/boot
   mount "$BOOT_PARTITION" $NEW_ROOT/boot
+  swapon "$SWAP_PARTITION"
 }
 
 install_base_system() {
@@ -131,7 +140,7 @@ create_user() {
 }
 
 enable_essential_services() {
-  systemctl --root=$NEW_ROOT enable NetworkManager sddm
+  systemctl --root=$NEW_ROOT enable NetworkManager sddm bluetooth
 }
 
 install_systemd_boot() {
