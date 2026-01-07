@@ -24,46 +24,23 @@ cd arch-restore
 ## 3. Partition
 
 ```bash
-# Find your disk
-lsblk
-
-# Partition it (example: /dev/nvme0n1)
-fdisk /dev/nvme0n1
+./partition.sh
+# Auto-detects largest disk
+# Prompts for EFI size (default 256M)
+# Prompts for swap size (default 8G)
+# Shows plan, confirms, formats
 ```
 
-Inside fdisk:
-```
-g        # new GPT partition table
+Layout: `[root p1] [swap p99] [efi p100]`
+Root first = can expand later by shrinking swap.
 
-n        # new partition 1 (boot)
-         # enter for default partition number
-         # enter for default first sector
-+256M    # 256MB for boot
-t        # change type
-1        # EFI System
-
-n        # new partition 2 (swap)
-         # enter for default partition number
-         # enter for default first sector
-+8G      # 8GB for swap (adjust to your RAM)
-t        # change type
-2        # select partition 2
-19       # Linux swap
-
-n        # new partition 3 (root)
-         # enter for defaults (uses rest of disk)
-         # enter
-         # enter
-
-w        # write and exit
-```
-
-Result: `/dev/nvme0n1p1` (boot), `/dev/nvme0n1p2` (swap), `/dev/nvme0n1p3` (root)
+Result (NVMe): `p1` (root), `p99` (swap), `p100` (efi)
 
 ## 4. Install
 
 ```bash
-./install.sh /dev/nvme0n1p1 /dev/nvme0n1p2 /dev/nvme0n1p3
+# partition.sh tells you the exact command, e.g.:
+./install.sh /dev/nvme0n1p100 /dev/nvme0n1p99 /dev/nvme0n1p1
 # enter deploy key passphrase when prompted
 ```
 
