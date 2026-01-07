@@ -30,7 +30,7 @@ Bootstrap flow:
 
 ### Minor Fixes
 
-- [ ] Add `[[ -f ]]` guards to profile sourcing (`.passwords`, `.env`, `az.completion`, `.cargo/env`)
+- [x] Add `[[ -f ]]` guards to profile sourcing (`.passwords`, `.env`, `az.completion`, `.cargo/env`)
 - [ ] Default background image or graceful fallback in i3 config
 - [ ] Toggl API token setup (first-run prompt or docs)
 
