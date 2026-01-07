@@ -1,0 +1,49 @@
+#!/bin/bash
+# Easy WiFi connect for Arch live ISO
+# Usage: wifi              (interactive)
+#        wifi "NetworkName" (direct, will prompt for password)
+
+set -e
+
+DEVICE="wlan0"
+
+# Ensure device is up
+ip link set "$DEVICE" up 2>/dev/null || true
+
+# Scan for networks
+iwctl station "$DEVICE" scan
+sleep 2
+
+if [[ -n "$1" ]]; then
+  # Direct mode: network name provided
+  NETWORK="$1"
+else
+  # Interactive mode: show list and prompt
+  echo ""
+  echo "Available networks:"
+  echo "-------------------"
+  iwctl station "$DEVICE" get-networks | tail -n +5 | head -20 | nl -w2 -s'. '
+  echo ""
+  read -p "Enter number (or network name): " SELECTION
+  
+  if [[ "$SELECTION" =~ ^[0-9]+$ ]]; then
+    NETWORK=$(iwctl station "$DEVICE" get-networks | tail -n +5 | head -20 | sed -n "${SELECTION}p" | awk '{print $1}')
+  else
+    NETWORK="$SELECTION"
+  fi
+fi
+
+echo ""
+read -sp "Password for '$NETWORK': " PASS
+echo ""
+
+iwctl station "$DEVICE" connect "$NETWORK" --passphrase "$PASS"
+
+sleep 2
+if ping -c 1 -W 3 google.com &>/dev/null; then
+  echo "✓ Connected to $NETWORK"
+else
+  echo "✗ Connection failed. Try again or check password."
+  exit 1
+fi
+
