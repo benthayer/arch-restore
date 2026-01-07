@@ -5,7 +5,7 @@
 Create a read-only deploy key for the `ben` repo with memorable passphrase.
 
 ```bash
-ssh-keygen -t ed25519 -a 10000 -C "deploy key for ben repo" -f deploy_key
+ssh-keygen -t ed25519 -a 10000 -C "deploy key for arch-personalization" -f deploy_key
 # Use memorable passphrase (test with: npx zxcvbn-cli "your passphrase")
 # Decrypt takes ~2 min — that's fine for disaster recovery
 ```
@@ -20,7 +20,7 @@ Store the encrypted key in this repo. Passphrase is memorized.
 Bootstrap flow:
 1. `install.sh` → reboot
 2. Copy deploy key from this repo, decrypt with memorized passphrase
-3. `git clone git@github.com:benthayer/ben.git ~/.ben`
+3. `git clone git@github.com:benthayer/arch-personalization.git ~/.ben`
 4. `~/.ben/setup/configure.sh`
 5. Later: get real SSH key from 1Password for full access
 

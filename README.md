@@ -37,7 +37,7 @@ This is a bare-metal recovery system. If your laptop dies, gets stolen, or you j
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
 │  2. PERSONALIZATION (~45 min)                                   │
-│     git clone https://github.com/benthayer/ben.git ~/.ben       │
+│     git clone https://github.com/benthayer/arch-personalization.git ~/.ben       │
 │     ~/.ben/setup/configure.sh                                   │
 └─────────────────────────────────────────────────────────────────┘
                               ↓

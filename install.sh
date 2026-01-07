@@ -127,7 +127,7 @@ print_success() {
   echo "Reboot and login as '$USERNAME' with password '$DEFAULT_PASSWORD'"
   echo ""
   echo "Then run personalization:"
-  echo "  git clone https://github.com/benthayer/ben.git ~/.ben"
+  echo "  git clone https://github.com/benthayer/arch-personalization.git ~/.ben"
   echo "  ~/.ben/setup/configure.sh"
   echo "=========================================="
 }
