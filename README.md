@@ -106,8 +106,16 @@ reboot
 # Connect to WiFi
 nmcli device wifi connect "YourWiFi" password "YourPassword"
 
-# Clone and run
-git clone https://github.com/benthayer/ben.git ~/.ben
+# Get the deploy key (from USB, this repo, wherever you stashed it)
+# The encrypted key is in this repo at deploy_key
+# Passphrase: memorized (10k rounds = ~2 min to decrypt = ~$30M to crack)
+
+# Set up SSH agent with deploy key
+eval "$(ssh-agent -s)"
+ssh-add deploy_key  # enter passphrase
+
+# Clone with deploy key
+git clone git@github.com:benthayer/ben.git ~/.ben
 ~/.ben/setup/configure.sh
 
 # Reboot
